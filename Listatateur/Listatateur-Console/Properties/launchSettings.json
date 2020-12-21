@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Listatateur-Console": {
+      "commandName": "Project",
+      "commandLineArgs": "N:\\old\\y\\comp\\Music"
+    }
+  }
+}
