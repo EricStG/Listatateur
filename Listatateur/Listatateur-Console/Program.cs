@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -10,17 +11,33 @@ namespace Listatateur_Console
 
         static void Main(string[] args)
         {
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder
+                    .SetMinimumLevel(LogLevel.Trace)
+                    .AddConsole();
+
+            });
+            
+            var files = CrawlFiles(args, loggerFactory);
+            ExportFiles(files);
+        }
+
+        private static IEnumerable<Crawler.MediaFile> CrawlFiles(string[] args, ILoggerFactory loggerFactory)
+        {
+            var crawler = new Crawler.Crawler(loggerFactory.CreateLogger<Crawler.Crawler>());
+
             IEnumerable<Crawler.MediaFile> files;
             if (args.Length > 0)
-            { 
-                files = Crawler.Crawler.ProcessPaths(args, true);
+            {
+                files = crawler.ProcessPaths(args, true);
             }
             else
             {
-                files = Crawler.Crawler.ProcessPaths(new string[] { Environment.CurrentDirectory }, true);
+                files = crawler.ProcessPaths(new string[] { Environment.CurrentDirectory }, true);
             }
 
-            ExportFiles(files);
+            return files;
         }
 
         static void ExportFiles(IEnumerable<Crawler.MediaFile> files)

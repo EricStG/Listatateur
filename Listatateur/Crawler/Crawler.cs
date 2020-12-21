@@ -1,4 +1,4 @@
-﻿using log4net;
+﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,17 +7,24 @@ namespace Crawler
 {
     public class Crawler
     {
-        private static ILog logger = LogManager.GetLogger(typeof(Crawler));
+        public Crawler(ILogger<Crawler> logger)
+        {
+            _logger = logger;
+        }
 
-        private static MediaFile ProcessFile(string filename)
+        private readonly ILogger<Crawler> _logger;
+
+        private static readonly HashSet<string> _extensions = new HashSet<string>(new[] { ".mp3", ".aac", ".ogg" }, StringComparer.OrdinalIgnoreCase); // TODO: make this configurable?
+
+        private MediaFile ProcessFile(string filename)
         {
             try
             {
-                if (Properties.Settings.Default.Extensions.Contains(Path.GetExtension(filename)))
+                if (_extensions.Contains(Path.GetExtension(filename)))
                 {
                     using (var file = TagLib.File.Create(filename, TagLib.ReadStyle.Average))
                     {
-                        return new MediaFile()
+                        return new MediaFile
                         {
                             Filename = filename,
                             Title = file.Tag.Title,
@@ -34,18 +41,18 @@ namespace Crawler
                 }
                 else
                 {
-                    logger.DebugFormat("File '{0}' does not match any of the configured extensions. Skipping.", filename);
+                    _logger.LogDebug("File '{Filename}' does not match any of the configured extensions. Skipping.", filename);
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                logger.WarnFormat("Could not read tag for file '{0}': {1}", filename, ex);
+                _logger.LogWarning(ex, "Could not read tag for file '{Filename}'", filename);
                 return null;
             }
         }
 
-        private static IEnumerable<MediaFile> ProcessFolder(string folder, bool recursive)
+        private IEnumerable<MediaFile> ProcessFolder(string folder, bool recursive)
         {
             SearchOption options;
             if (recursive)
@@ -66,7 +73,7 @@ namespace Crawler
             }
         }
 
-        public static IEnumerable<MediaFile> ProcessPaths(IEnumerable<string> paths, bool recursive)
+        public IEnumerable<MediaFile> ProcessPaths(IEnumerable<string> paths, bool recursive)
         {            
             foreach(var path in paths)
             {
