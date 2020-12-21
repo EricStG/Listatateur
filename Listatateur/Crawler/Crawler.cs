@@ -47,7 +47,6 @@ namespace Crawler
 
         private static IEnumerable<MediaFile> ProcessFolder(string folder, bool recursive)
         {
-            List<MediaFile> list = new List<MediaFile>();
             SearchOption options;
             if (recursive)
             {
@@ -62,29 +61,28 @@ namespace Crawler
                 var file = ProcessFile(filename);
                 if (file != null)
                 {
-                    list.Add(file);
+                    yield return file;
                 }
             }
-
-            return list;
         }
 
         public static IEnumerable<MediaFile> ProcessPaths(IEnumerable<string> paths, bool recursive)
         {            
-            List<MediaFile> list = new List<MediaFile>();
             foreach(var path in paths)
             {
                 var attribs = File.GetAttributes(path);
                 if (attribs.HasFlag(FileAttributes.Directory))
                 {
-                    list.AddRange(ProcessFolder(path, recursive));
+                    foreach (var media in ProcessFolder(path, recursive))
+                    {
+                        yield return media;
+                    }
                 }
                 else
                 {
-                    list.Add(ProcessFile(path));
+                    yield return ProcessFile(path);
                 }
             }
-            return list;
         }
     }
 }
