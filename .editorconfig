@@ -1,0 +1,4 @@
+root = true
+
+[*.csproj]
+indent_size = 2
